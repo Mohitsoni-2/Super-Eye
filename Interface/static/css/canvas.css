@@ -1,0 +1,12 @@
+/* ═══════════════════════════════════════════════════
+   Super Eye v3.0 — Canvas / Detection Overlay styles
+   (scan grid, face box labels, shimmer effects)
+   ═══════════════════════════════════════════════════ */
+
+/* Canvas always fills its parent exactly */
+canvas.overlay {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  display: block;
+}

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Eye — Smart Detection System</title>
+  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="static/css/canvas.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     HEADER
+══════════════════════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="12" rx="10" ry="6"/>
+        <circle cx="12" cy="12" r="3"/>
+        <circle cx="12" cy="12" r="1" fill="#000" stroke="none"/>
+      </svg>
+    </div>
+    <div class="logo-title">Super<span>Eye</span><span class="logo-version">v3.0</span></div>
+  </div>
+
+  <div class="header-right">
+    <button class="btn-header" onclick="openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+      Settings
+    </button>
+
+    <div class="status-pill ready" id="sysStatus">
+      <div class="dot pulse"></div>
+      <span>SYSTEM READY</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+     MAIN 3-COLUMN
+══════════════════════════════════ -->
+<div class="main">
+
+  <!-- ── LEFT: People Database ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">People Database</span>
+      <span class="badge" id="personCount">0 loaded</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="photoDropZone">
+        <input type="file" id="photoInput" accept="image/*" multiple>
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-label">Upload person photos</div>
+        <div class="upload-sub">Drag & drop or click · JPG, PNG, WEBP</div>
+      </div>
+
+      <!-- Person list -->
+      <div id="personList"></div>
+
+    </div>
+  </div>
+
+  <!-- ── CENTER: Video Area ── -->
+  <div class="video-area">
+
+    <!-- Mode bar -->
+    <div class="mode-bar">
+      <button class="mode-btn active" id="btnLive" onclick="switchMode('live')">
+        <div class="rec-dot"></div>
+        Live Camera
+      </button>
+      <button class="mode-btn" id="btnRecorded" onclick="switchMode('recorded')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+        Recorded Video
+      </button>
+
+      <div class="mode-spacer"></div>
+
+      <div class="backend-badge demo" id="backendBadge">
+        <div class="bdot"></div>
+        DEMO MODE
+      </div>
+
+      <button class="stop-btn" id="stopBtn" onclick="stopDetection()">
+        <svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" rx="1" fill="currentColor"/></svg>
+        Stop
+      </button>
+    </div>
+
+    <!-- ── Idle screen ── -->
+    <div class="video-feed" id="idleView" style="display:flex">
+      <div class="idle-screen">
+        <div class="idle-eye">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round">
+            <ellipse cx="12" cy="12" rx="10" ry="6"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="idle-title">Ready to detect</div>
+        <div class="idle-sub">Add person photos on the left, then start live camera or upload a recorded video.</div>
+        <button class="btn-primary" id="startLiveBtn" onclick="startLive()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          </svg>
+          Start Live Detection
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Live camera view ── -->
+    <div class="video-feed" id="liveView" style="display:none; position:relative">
+      <video id="videoEl" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <canvas id="overlayLive" class="overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+
+      <!-- HUD top-left -->
+      <div class="hud-tl">
+        <div class="hud-pill">
+          <div class="dot pulse" style="color:var(--danger)"></div>
+          LIVE
+        </div>
+        <div class="hud-pill dim" id="fpsDisplay">— FPS</div>
+      </div>
+
+      <!-- HUD top-right -->
+      <div class="hud-tr">
+        <div class="hud-pill dim" id="liveTime">--/--/---- --:--:--</div>
+      </div>
+    </div>
+
+    <!-- ── Recorded video view ── -->
+    <div class="video-feed" id="recordedView" style="display:none; flex-direction:column; position:relative">
+
+      <!-- Drop UI -->
+      <div class="video-drop-wrap" id="videoDropUI">
+        <div class="video-drop-box">
+          <input type="file" id="videoFileInput" accept="video/*">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          <div class="video-drop-title">Upload video file</div>
+          <div class="video-drop-sub">MP4, WebM, MOV, AVI</div>
+        </div>
+      </div>
+
+      <!-- Video player -->
+      <div id="videoPlayerWrap" style="display:none; position:relative; width:100%; height:100%">
+        <video id="uploadedVideo" controls style="width:100%;height:100%;object-fit:contain;display:block"></video>
+        <canvas id="overlayRec" class="overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></canvas>
+
+        <!-- HUD -->
+        <div class="hud-tl">
+          <div class="hud-pill" style="color:var(--accent2)">
+            <div class="dot" style="color:var(--accent2)"></div>
+            RECORDED
+          </div>
+          <div class="hud-pill dim" id="videoTs">00:00:00</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /.video-area -->
+
+  <!-- ── RIGHT: Detection Log ── -->
+  <div class="panel right">
+    <div class="panel-header">
+      <span class="panel-title">Detection Log</span>
+      <span class="badge" id="logCount">0 events</span>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-lbl">Total</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val" id="statUnique">0</div>
+        <div class="stat-lbl">Unique</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-val" id="statLast" style="font-size:13px">—</div>
+        <div class="stat-lbl">Last</div>
+      </div>
+    </div>
+
+    <div class="panel-body" id="logBody">
+      <div class="empty-state" id="logEmpty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+        </svg>
+        No detections yet.<br>Start detection to begin logging.
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn-export" onclick="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export CSV
+      </button>
+      <button class="btn-clear" onclick="clearLog()">Clear</button>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+
+<!-- ══════════════════════════════════
+     SETTINGS MODAL
+══════════════════════════════════ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Detection Settings</span>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">
+        Match Threshold
+        <span class="form-label-val" id="threshVal">0.52</span>
+      </div>
+      <input type="range" id="threshRange" min="0.3" max="0.75" step="0.01" value="0.52"
+             oninput="document.getElementById('threshVal').textContent=parseFloat(this.value).toFixed(2)">
+      <div class="form-hint"><span>← Stricter</span><span>Lenient →</span></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">
+        Scan Interval
+        <span class="form-label-val" id="intervalVal">1s</span>
+      </div>
+      <input type="range" id="intervalRange" min="1" max="8" step="1" value="1"
+             oninput="document.getElementById('intervalVal').textContent=this.value+'s'">
+      <div class="form-hint"><span>← Real-time</span><span>Battery save →</span></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Detection Model</div>
+      <select class="form-select" id="modelSelect">
+        <option value="hog">HOG (CPU — fast, good accuracy)</option>
+        <option value="cnn">CNN (GPU — best accuracy, slower)</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Jitter (accuracy boost)</div>
+      <select class="form-select" id="jitterSelect">
+        <option value="1">1× — fast</option>
+        <option value="2" selected>2× — balanced</option>
+        <option value="5">5× — highest accuracy</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label class="form-check">
+        <input type="checkbox" id="autoExport" checked>
+        Auto-save detections to CSV
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label class="form-check">
+        <input type="checkbox" id="skipUnknown" checked>
+        Only log matched (known) faces
+      </label>
+    </div>
+
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="closeSettings()">
+      Save Settings
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Keyboard hint -->
+<div id="keyHint">L · live &nbsp;|&nbsp; R · recorded &nbsp;|&nbsp; E · export &nbsp;|&nbsp; , · settings &nbsp;|&nbsp; ESC · stop</div>
+
+<!-- ══════════════════════════════════
+     SCRIPTS (order matters)
+══════════════════════════════════ -->
+<script src="static/js/canvas.js"></script>
+<script src="static/js/demo.js"></script>
+<script src="static/js/ws.js"></script>
+<script src="static/js/app.js"></script>
+
+<script>
+/* ── Glue: event listeners that need DOM ── */
+
+// Photo upload
+document.getElementById('photoInput').addEventListener('change', e => handleFiles(e.target.files));
+
+// Drag-and-drop on photo zone
+const pZone = document.getElementById('photoDropZone');
+pZone.addEventListener('dragover',  e => { e.preventDefault(); pZone.classList.add('dragover'); });
+pZone.addEventListener('dragleave', () => pZone.classList.remove('dragover'));
+pZone.addEventListener('drop', e => {
+  e.preventDefault();
+  pZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+// Video file upload
+document.getElementById('videoFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) handleVideoUpload(file);
+});
+
+// Drag-and-drop on video zone
+const vZone = document.getElementById('videoDropUI');
+vZone.addEventListener('dragover',  e => { e.preventDefault(); vZone.style.borderColor = 'var(--accent)'; });
+vZone.addEventListener('dragleave', () => vZone.style.borderColor = '');
+vZone.addEventListener('drop', e => {
+  e.preventDefault();
+  vZone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) handleVideoUpload(file);
+});
+
+// Resize canvases when window resizes
+window.addEventListener('resize', () => {
+  ['overlayLive','overlayRec'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) { c.width = c.parentElement.clientWidth; c.height = c.parentElement.clientHeight; }
+  });
+});
+
+// Kick WebSocket connection attempt
+document.addEventListener('DOMContentLoaded', () => {
+  WSClient.init();
+  // Override app.js startLive to also send ws start_live
+  const _origStart = startLive;
+  startLive = async function() {
+    await _origStart();
+    WSClient.sendStartLive(0);
+    DemoDetection.stop(); // stop demo if backend takes over
+  };
+  // Override handleVideoUpload to kick ws recorded loop
+  const _origVid = handleVideoUpload;
+  handleVideoUpload = function(file) {
+    _origVid(file);
+    const vid = document.getElementById('uploadedVideo');
+    setTimeout(() => {
+      if (WSClient.isConnected()) {
+        DemoDetection.stop();
+        WSClient.startRecordedLoop(vid);
+      }
+    }, 600);
+  };
+});
+</script>
+
+</body>
+</html>
